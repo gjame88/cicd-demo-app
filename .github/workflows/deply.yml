@@ -38,7 +38,11 @@ jobs:
 
       - name: Trigger Deployment update
         run: |
-          # 새 이미지를 반영하여 Pod을 새로 띄우도록 강제합니다.
+          # 1. annotation에 현재 시간을 주입하여 설정을 변경된 것으로 간주하게 만듭니다.
+          # 2. 이 과정을 통해 OpenShift는 무조건 파드를 재배포(Rolling Update)합니다.
+          oc patch deployment/cicd-demo-app-git -p "{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"date\":\"$(date +%s)\"}}}}}"
+         
+          # 3. 배포 시작
           oc rollout latest deployment/cicd-demo-app-git
 
       - name: Verify rollout
