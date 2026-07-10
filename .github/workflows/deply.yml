@@ -43,4 +43,4 @@ jobs:
       - name: Verify rollout
         run: |
           # 6. 배포 상태 확인
-          oc rollout status deployment/cicd-demo-app
+          oc rollout status deployment/cicd-demo-app-git
