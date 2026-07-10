@@ -3,7 +3,7 @@ const port = process.env.PORT || 8080;
 
 http.createServer((req, res) => {
   res.writeHead(200);
-  res.end('Hello from v1.5!\n');
+  res.end('Hello from v1.6!\n');
 }).listen(port);
 
 console.log(`Server running on port ${port}`);
