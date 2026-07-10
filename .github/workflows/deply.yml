@@ -1,0 +1,46 @@
+name: Deploy to OpenShift
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install oc CLI
+        # 1. oc가 이미 설치되어 있으면 건너뛰고, 없으면 다운로드하는 로직입니다.
+        # 2. 이 과정을 생략하면 네트워크 문제로 인한 빌드 지연을 막을 수 있습니다.
+        run: |
+          if ! command -v oc &> /dev/null; then
+            echo "oc not found, downloading..."
+            curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz
+            tar xzf openshift-client-linux.tar.gz
+            sudo mv oc /usr/local/bin/
+            sudo mv kubectl /usr/local/bin/  # kubectl도 함께 설치하는 것이 좋습니다.
+          else
+            echo "oc is already installed, skipping."
+          fi
+
+      - name: Login to OpenShift
+        run: |
+          # 3. OpenShift 서버 접속 (보안상 필수는 아니지만 CRC/개발 환경에서는 안전한 설정입니다.)
+          oc login ${{ secrets.OPENSHIFT_SERVER }} \
+            --token=${{ secrets.OPENSHIFT_TOKEN }} \
+            --insecure-skip-tls-verify=true
+
+      - name: Trigger new build
+        run: |
+          # 4. 대상 프로젝트 지정
+          oc project cicd-demo
+          # 5. 빌드 시작 (BuildConfig 이름이 cicd-demo-app-git인지 확인하세요!)
+          oc start-build cicd-demo-app-git --follow
+
+      - name: Verify rollout
+        run: |
+          # 6. 배포 상태 확인
+          oc rollout status deployment/cicd-demo-app
